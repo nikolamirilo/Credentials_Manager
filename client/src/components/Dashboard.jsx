@@ -561,7 +561,7 @@ const Dashboard = () => {
                 </p>
                 <button
                   onClick={() => handleDeleteVault(vault.id)}
-                  className="z-100 absolute top-2 right-2 text-red-400 cursor-pointer"
+                  className="z-100 absolute top-2 right-2 text-red-400 cursor-pointer hover:text-red-500"
                 >
                   <MdOutlineDeleteSweep size={30} />
                 </button>
@@ -571,7 +571,7 @@ const Dashboard = () => {
         </div>
 
         {/* Credentials Section */}
-        <div className="lg:col-span-2 bg-white border border-slate-300 rounded-lg p-6 shadow-[0_2px_22px_-4px_rgba(93,96,127,0.2)] flex flex-col">
+        <div className="lg:col-span-2 bg-white border max-h-[88vh] overflow-auto border-slate-300 rounded-lg p-6 shadow-[0_2px_22px_-4px_rgba(93,96,127,0.2)] flex flex-col">
           <h2 className="text-xl font-semibold text-slate-800 mb-4">
             {selectedVaultId
               ? "Credentials"
