@@ -1,5 +1,5 @@
-/app/.env
-/app/node_modules
+.env
+node_modules
 /dist
 /build
 /coverage
