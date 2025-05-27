@@ -8,7 +8,7 @@ const Auth = () => {
 
   const signIn = async () => {
     try {
-      const response = await fetch("https://credentialsmanager1-1gy941uu.b4a.run/users/login", {
+      const response = await fetch(`${import.meta.env.VITE_BASE_URL}/users/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -43,7 +43,7 @@ const Auth = () => {
     }
 
     try {
-      const response = await fetch("https://credentialsmanager1-1gy941uu.b4a.run/users/register", {
+      const response = await fetch(`${import.meta.env.VITE_BASE_URL}/users/register`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

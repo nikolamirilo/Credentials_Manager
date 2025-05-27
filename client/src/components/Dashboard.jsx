@@ -62,7 +62,7 @@ const Dashboard = () => {
       setError(null);
       try {
         const response = await fetch(
-          `https://credentialsmanager1-1gy941uu.b4a.run/vaults?user_id=${userId}`
+          `${import.meta.env.VITE_BASE_URL}/vaults?user_id=${userId}`
         ); // Ensure port matches
         const data = await response.json();
 
@@ -94,7 +94,7 @@ const Dashboard = () => {
       setError(null);
       try {
         const response = await fetch(
-          `https://credentialsmanager1-1gy941uu.b4a.run/credentials/${selectedVaultId}`
+          `${import.meta.env.VITE_BASE_URL}/credentials/${selectedVaultId}`
         ); // Ensure port matches
         const data = await response.json();
 
@@ -126,7 +126,7 @@ const Dashboard = () => {
     }
 
     try {
-      const response = await fetch("https://credentialsmanager1-1gy941uu.b4a.run/vaults", {
+      const response = await fetch(`${import.meta.env.VITE_BASE_URL}/vaults`, {
         // Ensure port matches
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -143,7 +143,7 @@ const Dashboard = () => {
       setIsMobileMenuOpen(false);
       // Re-fetch vaults to update the list
       const updatedVaultsResponse = await fetch(
-        `https://credentialsmanager1-1gy941uu.b4a.run/vaults?user_id=${userId}`
+        `${import.meta.env.VITE_BASE_URL}/vaults?user_id=${userId}`
       );
       const updatedVaultsData = await updatedVaultsResponse.json();
       if (updatedVaultsResponse.ok) {
@@ -158,7 +158,7 @@ const Dashboard = () => {
     console.log("Deleting vault with ID:", vaultId);
     try {
       const response = await fetch(
-        `https://credentialsmanager1-1gy941uu.b4a.run/vaults/${vaultId}?user_id=${userId}`,
+        `${import.meta.env.VITE_BASE_URL}/vaults/${vaultId}?user_id=${userId}`,
         {
           method: "DELETE",
         }
@@ -169,7 +169,7 @@ const Dashboard = () => {
       setMessage("Vault deleted successfully!");
       // Re-fetch vaults to update the list
       const updatedVaultsResponse = await fetch(
-        `https://credentialsmanager1-1gy941uu.b4a.run/vaults?user_id=${userId}`
+        `${import.meta.env.VITE_BASE_URL}/vaults?user_id=${userId}`
       );
       const updatedVaultsData = await updatedVaultsResponse.json();
       if (updatedVaultsResponse.ok) {
@@ -193,7 +193,7 @@ const Dashboard = () => {
     }
 
     try {
-      const response = await fetch("https://credentialsmanager1-1gy941uu.b4a.run/credentials", {
+      const response = await fetch(`${import.meta.env.VITE_BASE_URL}/credentials`, {
         // Ensure port matches
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -217,7 +217,7 @@ const Dashboard = () => {
       setShowAddCredentialModal(false);
       // Re-fetch credentials for the current vault
       const updatedCredentialsResponse = await fetch(
-        `https://credentialsmanager1-1gy941uu.b4a.run/credentials/${selectedVaultId}`
+        `${import.meta.env.VITE_BASE_URL}/credentials/${selectedVaultId}`
       );
       const updatedCredentialsData = await updatedCredentialsResponse.json();
       if (updatedCredentialsResponse.ok) {
@@ -236,7 +236,7 @@ const Dashboard = () => {
     setDisplayedPassword("Decrypting..."); // Show a loading indicator
 
     try {
-      const response = await fetch("https://credentialsmanager1-1gy941uu.b4a.run/decrypt", {
+      const response = await fetch(`${import.meta.env.VITE_BASE_URL}/decrypt`, {
         // Ensure port matches
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -342,7 +342,7 @@ const Dashboard = () => {
     try {
       console.log("Simulating import of: ", credentialsToImport);
 
-      const response = await fetch("https://credentialsmanager1-1gy941uu.b4a.run/import-credentials", {
+      const response = await fetch(`${import.meta.env.VITE_BASE_URL}/import-credentials`, {
         // New endpoint
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -365,7 +365,7 @@ const Dashboard = () => {
       setShowImportCSVModal(false);
       // Consider re-fetching credentials for the current vault after a real import
       const updatedCredentialsResponse = await fetch(
-        `https://credentialsmanager1-1gy941uu.b4a.run/credentials/${selectedVaultId}`
+        `${import.meta.env.VITE_BASE_URL}/credentials/${selectedVaultId}`
       );
       const updatedCredentialsData = await updatedCredentialsResponse.json();
       if (updatedCredentialsResponse.ok) {
