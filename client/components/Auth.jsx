@@ -1,104 +1,50 @@
+"use client"
+import { useRouter } from 'next/navigation'
 import React, { useState } from "react";
 
-const Auth = () => {
+const Auth = ({signIn, signUp}) => {
   const [type, setType] = useState("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-
-  const signIn = async () => {
-    try {
-      const response = await fetch(`${import.meta.env.VITE_BASE_URL}/users/login`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.detail || data.message || "Sign-in failed");
-      }
-      console.log(data)
-      // Assuming the backend returns user_id on successful login
-      if (data.user_id) {
-        localStorage.setItem('user_id', data.user_id);
-         alert("Signed in successfully!");
-         window.location.href = "/dashboard"; // Redirect to dashboard on successful login
-      } else {
-         throw new Error("Sign-in successful, but no user ID received.");
-      }
-
-    } catch (error) {
-      alert(error.message);
-    }
-  };
-
-  const signUp = async () => {
-    if (password !== confirmPassword) {
-      alert("Passwords do not match");
-      return;
-    }
-
-    try {
-      const response = await fetch(`${import.meta.env.VITE_BASE_URL}/users/register`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.detail || data.message || "Sign-up failed");
-      }
-      console.log(data)
-      alert("Signed up successfully! You can now log in.");
-      setType("login");
-      // Handle successful sign-up
-    } catch (error) {
-      alert(error.message);
-    }
-  };
-
-  const handleSubmit = (e) => {
+  const router = useRouter()
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (type === "login") {
-      signIn();
+      const res = await signIn(email, password);
+      if(res.isSuccessful){
+        router.push("/dashboard")
+        localStorage.setItem("user_id", res.user_id)
+      }
     } else {
-      signUp();
+      await signUp(email, password, confirmPassword);
     }
   };
-
   return (
-    <div class="min-h-screen flex fle-col items-center justify-center">
-      <div class="py-6 px-4">
-        <div class="grid md:grid-cols-2 items-center gap-6 max-w-6xl w-full">
-          <div class="border border-slate-300 rounded-lg p-6 max-w-md shadow-[0_2px_22px_-4px_rgba(93,96,127,0.2)] max-md:mx-auto">
-            <form class="space-y-6" onSubmit={handleSubmit}>
-              <div class="mb-12">
-                <h3 class="text-slate-900 text-3xl font-semibold">
+    <div className="min-h-screen flex fle-col items-center justify-center">
+      <div className="py-6 px-4">
+        <div className="grid md:grid-cols-2 items-center gap-6 max-w-6xl w-full">
+          <div className="border border-slate-300 rounded-lg p-6 max-w-md shadow-[0_2px_22px_-4px_rgba(93,96,127,0.2)] max-md:mx-auto">
+            <form className="space-y-6" onSubmit={handleSubmit}>
+              <div className="mb-12">
+                <h3 className="text-slate-900 text-3xl font-semibold">
                   {type == "login" ? "Sign in" : "Sign up"}
                 </h3>
-                <p class="text-slate-500 text-sm mt-6 leading-relaxed">
+                <p className="text-slate-500 text-sm mt-6 leading-relaxed">
                   {type == "login" ? "Sign in to your account and explore a world of possibilities. Your journey begins here." : "Sign up to create an account and start your journey."}
                 </p>
               </div>
 
               <div>
-                <label class="text-slate-800 text-sm font-medium mb-2 block">
+                <label className="text-slate-800 text-sm font-medium mb-2 block">
                   Email
                 </label>
-                <div class="relative flex items-center">
+                <div className="relative flex items-center">
                   <input
                     name="email"
                     type="email"
                     required
-                    class="w-full text-sm text-slate-800 border border-slate-300 pl-4 pr-10 py-3 rounded-lg outline-blue-600"
+                    className="w-full text-sm text-slate-800 border border-slate-300 pl-4 pr-10 py-3 rounded-lg outline-blue-600"
                     placeholder="Enter email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
@@ -107,7 +53,7 @@ const Auth = () => {
                     xmlns="http://www.w3.org/2000/svg"
                     fill="#bbb"
                     stroke="#bbb"
-                    class="w-[18px] h-[18px] absolute right-4"
+                    className="w-[18px] h-[18px] absolute right-4"
                     viewBox="0 0 24 24"
                   >
                     <circle
@@ -124,15 +70,15 @@ const Auth = () => {
                 </div>
               </div>
               <div>
-                <label class="text-slate-800 text-sm font-medium mb-2 block">
+                <label className="text-slate-800 text-sm font-medium mb-2 block">
                   Password
                 </label>
-                <div class="relative flex items-center">
+                <div className="relative flex items-center">
                   <input
                     name="password"
                     type="password"
                     required
-                    class="w-full text-sm text-slate-800 border border-slate-300 pl-4 pr-10 py-3 rounded-lg outline-blue-600"
+                    className="w-full text-sm text-slate-800 border border-slate-300 pl-4 pr-10 py-3 rounded-lg outline-blue-600"
                     placeholder="Enter password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -141,7 +87,7 @@ const Auth = () => {
                     xmlns="http://www.w3.org/2000/svg"
                     fill="#bbb"
                     stroke="#bbb"
-                    class="w-[18px] h-[18px] absolute right-4 cursor-pointer"
+                    className="w-[18px] h-[18px] absolute right-4 cursor-pointer"
                     viewBox="0 0 128 128"
                   >
                     <path
@@ -153,15 +99,15 @@ const Auth = () => {
               </div>
               {type == "signup" && (
                 <div>
-                  <label class="text-slate-800 text-sm font-medium mb-2 block">
+                  <label className="text-slate-800 text-sm font-medium mb-2 block">
                     Confirm Password
                   </label>
-                  <div class="relative flex items-center">
+                  <div className="relative flex items-center">
                     <input
                       name="confirm-password"
                       type="password"
                       required
-                      class="w-full text-sm text-slate-800 border border-slate-300 pl-4 pr-10 py-3 rounded-lg outline-blue-600"
+                      className="w-full text-sm text-slate-800 border border-slate-300 pl-4 pr-10 py-3 rounded-lg outline-blue-600"
                       placeholder="Confirm password"
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
@@ -170,7 +116,7 @@ const Auth = () => {
                       xmlns="http://www.w3.org/2000/svg"
                       fill="#bbb"
                       stroke="#bbb"
-                      class="w-[18px] h-[18px] absolute right-4 cursor-pointer"
+                      className="w-[18px] h-[18px] absolute right-4 cursor-pointer"
                       viewBox="0 0 128 128"
                     >
                       <path
@@ -184,44 +130,44 @@ const Auth = () => {
 
               {type == "login" ? (
                 <>
-                  <div class="flex flex-wrap items-center justify-between gap-4">
-                    <div class="flex items-center">
+                  <div className="flex flex-wrap items-center justify-between gap-4">
+                    <div className="flex items-center">
                       <input
                         id="remember-me"
                         name="remember-me"
                         type="checkbox"
-                        class="h-4 w-4 shrink-0 text-blue-600 focus:ring-blue-500 border-slate-300 rounded"
+                        className="h-4 w-4 shrink-0 text-blue-600 focus:ring-blue-500 border-slate-300 rounded"
                       />
                       <label
                         for="remember-me"
-                        class="ml-3 block text-sm text-slate-500"
+                        className="ml-3 block text-sm text-slate-500"
                       >
                         Remember me
                       </label>
                     </div>
 
-                    <div class="text-sm">
+                    <div className="text-sm">
                       <a
                         href="jajvascript:void(0);"
-                        class="text-blue-600 hover:underline font-medium"
+                        className="text-blue-600 hover:underline font-medium"
                       >
                         Forgot your password?
                       </a>
                     </div>
                   </div>
 
-                  <div class="!mt-12">
+                  <div className="!mt-12">
                     <button
                       type="submit"
-                      class="w-full shadow-xl py-2.5 px-4 text-[15px] font-medium tracking-wide rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none cursor-pointer"
+                      className="w-full shadow-xl py-2.5 px-4 text-[15px] font-medium tracking-wide rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none cursor-pointer"
                     >
                       Sign in
                     </button>
-                    <p class="text-sm !mt-6 text-center text-slate-500">
+                    <p className="text-sm !mt-6 text-center text-slate-500">
                       Don't have an account{" "}
                       <button
                         onClick={() => setType("signup")}
-                        class="text-blue-600 font-medium hover:underline ml-1 whitespace-nowrap"
+                        className="text-blue-600 font-medium hover:underline ml-1 whitespace-nowrap"
                       >
                         Sign up here
                       </button>
@@ -230,18 +176,18 @@ const Auth = () => {
                 </>
               ) : (
                 <>
-                  <div class="!mt-12">
+                  <div className="!mt-12">
                     <button
                       type="submit"
-                      class="w-full shadow-xl py-2.5 px-4 text-[15px] font-medium tracking-wide rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none cursor-pointer"
+                      className="w-full shadow-xl py-2.5 px-4 text-[15px] font-medium tracking-wide rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none cursor-pointer"
                     >
                       Sign up
                     </button>
-                    <p class="text-sm !mt-6 text-center text-slate-500">
+                    <p className="text-sm !mt-6 text-center text-slate-500">
                       Already have an account{" "}
                       <button
                         onClick={() => setType("login")}
-                        class="text-blue-600 font-medium hover:underline ml-1 whitespace-nowrap cursor-pointer"
+                        className="text-blue-600 font-medium hover:underline ml-1 whitespace-nowrap cursor-pointer"
                       >
                         Sign in here
                       </button>
@@ -252,10 +198,10 @@ const Auth = () => {
             </form>
           </div>
 
-          <div class="max-md:mt-8">
+          <div className="max-md:mt-8">
             <img
               src="https://readymadeui.com/login-image.webp"
-              class="w-full aspect-[71/50] max-md:w-4/5 mx-auto block object-cover"
+              className="w-full aspect-[71/50] max-md:w-4/5 mx-auto block object-cover"
               alt="login img"
             />
           </div>

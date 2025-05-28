@@ -1,11 +1,13 @@
+"use client"
 import React, { useState, useEffect, use } from "react";
 import { MdOutlineDeleteSweep } from "react-icons/md";
-import { useNavigate } from "react-router-dom";
 import { Menu, X, Shield, Plus, Upload, LogOut } from "lucide-react";
-import { LineWave } from "react-loader-spinner";
+import { useRouter } from 'next/navigation'
+import Loader from "./Loader";
+import {getData} from "../actions/server"
 
 const Dashboard = () => {
-  const navigate = useNavigate();
+  const router = useRouter();
   // State for user and data
   const [userId, setUserId] = useState(null);
   const [vaults, setVaults] = useState([]);
@@ -19,8 +21,7 @@ const Dashboard = () => {
   // State for modal visibility
   const [showAddVaultModal, setShowAddVaultModal] = useState(false);
   const [showAddCredentialModal, setShowAddCredentialModal] = useState(false);
-  const [showDecryptedPasswordModal, setShowDecryptedPasswordModal] =
-    useState(false);
+  const [showDecryptedPasswordModal, setShowDecryptedPasswordModal] = useState(false);
   const [showImportCSVModal, setShowImportCSVModal] = useState(false);
 
   // States for form inputs
@@ -44,10 +45,10 @@ const Dashboard = () => {
     } else {
       setMessage("No user logged in. Redirecting to login...");
       setTimeout(() => {
-        navigate("/auth"); // Redirect to your Auth page using useNavigate
+        router.push("/");
       }, 2000);
     }
-  }, [navigate]);
+  }, []);
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
@@ -55,36 +56,34 @@ const Dashboard = () => {
 
   // Fetch vaults when userId changes
   useEffect(() => {
-    const fetchVaults = async () => {
+    const getDataVaults = async () => {
       if (!userId) return;
 
       setLoading(true);
       setError(null);
       try {
-        const response = await fetch(
-          `${import.meta.env.VITE_BASE_URL}/vaults?user_id=${userId}`
-        ); // Ensure port matches
-        const data = await response.json();
+        const response = await getData(`/vaults?user_id=${userId}`)
+        const data = response.data;
 
         if (!response.ok) {
-          throw new Error(data.message || "Failed to fetch vaults");
+          throw new Error(data.message || "Failed to getData vaults");
         }
         setVaults(data);
         setSelectedVaultId(data[0].id);
       } catch (err) {
         setError(err.message);
-        setMessage(`Error fetching vaults: ${err.message}`);
+        setMessage(`Error getDataing vaults: ${err.message}`);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchVaults();
+    getDataVaults();
   }, [userId]);
 
   // Fetch credentials when selectedVaultId changes
   useEffect(() => {
-    const fetchCredentials = async () => {
+    const getDataCredentials = async () => {
       if (!selectedVaultId) {
         setCredentials([]); // Clear credentials if no vault is selected
         return;
@@ -93,24 +92,24 @@ const Dashboard = () => {
       setLoading(true);
       setError(null);
       try {
-        const response = await fetch(
-          `${import.meta.env.VITE_BASE_URL}/credentials/${selectedVaultId}`
+        const response = await getData(
+          `/credentials/${selectedVaultId}`
         ); // Ensure port matches
-        const data = await response.json();
+        const data = response.data;
 
         if (!response.ok) {
-          throw new Error(data.message || "Failed to fetch credentials");
+          throw new Error(data.message || "Failed to getData credentials");
         }
         setCredentials(data);
       } catch (err) {
         setError(err.message);
-        setMessage(`Error fetching credentials: ${err.message}`);
+        setMessage(`Error getDataing credentials: ${err.message}`);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchCredentials();
+    getDataCredentials();
   }, [selectedVaultId]);
 
   const handleAddVault = async (e) => {
@@ -126,13 +125,13 @@ const Dashboard = () => {
     }
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_BASE_URL}/vaults`, {
+      const response = await getData(`/vaults`, {
         // Ensure port matches
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ user_id: userId, name: newVaultName }),
       });
-      const data = await response.json();
+      const data = response.data;
 
       if (!response.ok) {
         throw new Error(data.message || "Failed to create vault");
@@ -141,9 +140,9 @@ const Dashboard = () => {
       setNewVaultName("");
       setShowAddVaultModal(false);
       setIsMobileMenuOpen(false);
-      // Re-fetch vaults to update the list
-      const updatedVaultsResponse = await fetch(
-        `${import.meta.env.VITE_BASE_URL}/vaults?user_id=${userId}`
+      // Re-getData vaults to update the list
+      const updatedVaultsResponse = await getData(
+        `/vaults?user_id=${userId}`
       );
       const updatedVaultsData = await updatedVaultsResponse.json();
       if (updatedVaultsResponse.ok) {
@@ -157,8 +156,8 @@ const Dashboard = () => {
   async function handleDeleteVault(vaultId) {
     console.log("Deleting vault with ID:", vaultId);
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_BASE_URL}/vaults/${vaultId}?user_id=${userId}`,
+      const response = await getData(
+        `/vaults/${vaultId}?user_id=${userId}`,
         {
           method: "DELETE",
         }
@@ -167,9 +166,9 @@ const Dashboard = () => {
         throw new Error("Failed to delete vault");
       }
       setMessage("Vault deleted successfully!");
-      // Re-fetch vaults to update the list
-      const updatedVaultsResponse = await fetch(
-        `${import.meta.env.VITE_BASE_URL}/vaults?user_id=${userId}`
+      // Re-getData vaults to update the list
+      const updatedVaultsResponse = await getData(
+        `/vaults?user_id=${userId}`
       );
       const updatedVaultsData = await updatedVaultsResponse.json();
       if (updatedVaultsResponse.ok) {
@@ -193,7 +192,7 @@ const Dashboard = () => {
     }
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_BASE_URL}/credentials`, {
+      const response = await getData(`/credentials`, {
         // Ensure port matches
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -204,7 +203,7 @@ const Dashboard = () => {
           url: newCredentialUrl,
         }),
       });
-      const data = await response.json();
+      const data = response.data;
 
       if (!response.ok) {
         throw new Error(data.message || "Failed to add credential");
@@ -215,9 +214,9 @@ const Dashboard = () => {
       setNewCredentialPassword("");
       setNewCredentialUrl("");
       setShowAddCredentialModal(false);
-      // Re-fetch credentials for the current vault
-      const updatedCredentialsResponse = await fetch(
-        `${import.meta.env.VITE_BASE_URL}/credentials/${selectedVaultId}`
+      // Re-getData credentials for the current vault
+      const updatedCredentialsResponse = await getData(
+        `/credentials/${selectedVaultId}`
       );
       const updatedCredentialsData = await updatedCredentialsResponse.json();
       if (updatedCredentialsResponse.ok) {
@@ -236,14 +235,14 @@ const Dashboard = () => {
     setDisplayedPassword("Decrypting..."); // Show a loading indicator
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_BASE_URL}/decrypt`, {
+      const response = await getData(`/decrypt`, {
         // Ensure port matches
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ encryptedText: encryptedPassword, ivHex: iv }),
       });
 
-      const data = await response.json();
+      const data = response.data;
 
       if (!response.ok) {
         throw new Error(data.message || "Failed to decrypt password");
@@ -260,7 +259,7 @@ const Dashboard = () => {
 
   const handleLogout = () => {
     localStorage.removeItem("user_id");
-    navigate("/auth"); // Redirect to login page using useNavigate
+    router.push("/"); // Redirect to login page using useNavigate
   };
 
   const handleFileChange = (event) => {
@@ -342,7 +341,7 @@ const Dashboard = () => {
     try {
       console.log("Simulating import of: ", credentialsToImport);
 
-      const response = await fetch(`${import.meta.env.VITE_BASE_URL}/import-credentials`, {
+      const response = await getData(`/import-credentials`, {
         // New endpoint
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -352,7 +351,7 @@ const Dashboard = () => {
         }),
       });
 
-      const data = await response.json();
+      const data = response.data;
 
       if (!response.ok) {
         throw new Error(data.message || "Failed to import credentials");
@@ -363,9 +362,9 @@ const Dashboard = () => {
       setSelectedFile(null);
       setIsMobileMenuOpen(false);
       setShowImportCSVModal(false);
-      // Consider re-fetching credentials for the current vault after a real import
-      const updatedCredentialsResponse = await fetch(
-        `${import.meta.env.VITE_BASE_URL}/credentials/${selectedVaultId}`
+      // Consider re-getDataing credentials for the current vault after a real import
+      const updatedCredentialsResponse = await getData(
+        `/credentials/${selectedVaultId}`
       );
       const updatedCredentialsData = await updatedCredentialsResponse.json();
       if (updatedCredentialsResponse.ok) {
@@ -391,18 +390,7 @@ const Dashboard = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen bg-white/80">
-        <LineWave
-          visible={true}
-          height="200"
-          width="200"
-          color="#155dfc"
-          ariaLabel="line-wave-loading"
-          wrapperStyle={{}}
-          wrapperClass=""
-          firstLineColor=""
-          middleLineColor=""
-          lastLineColor=""
-        />
+      <Loader/>
       </div>
     );
   }
@@ -450,7 +438,7 @@ const Dashboard = () => {
             <div className="w-px h-6 bg-slate-300"></div>
 
             <button
-              onClick={handleLogout}
+              onClick={() => handleLogout()}
               className="flex items-center space-x-2 py-2 px-4 text-sm font-medium rounded-lg text-white bg-red-600 hover:bg-red-700 focus:outline-none transition-colors"
             >
               <LogOut className="h-4 w-4" />
@@ -831,7 +819,7 @@ const Dashboard = () => {
               {/* Import button will be added here after file is read */}
               <button
                 type="button"
-                onClick={handleImportCSV}
+                onClick={() => handleImportCSV()}
                 className={`py-2 px-4 text-[15px] font-medium tracking-wide rounded-lg text-white ${
                   csvData && !importing
                     ? "bg-blue-600 hover:bg-blue-700"
