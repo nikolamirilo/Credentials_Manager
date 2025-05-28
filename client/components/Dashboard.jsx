@@ -514,9 +514,9 @@ const Dashboard = () => {
         )}
       </header>
 
-      <main className="flex-1 p-6 grid lg:grid-cols-3 gap-6">
+      <main className="flex-1 px-2 py-4 md:px-6 md:py-6 grid lg:grid-cols-3 gap-4 md:gap-6">
         {/* Vaults Section */}
-        <div className="lg:col-span-1 sticky bg-white border border-slate-300 rounded-lg p-6 shadow-[0_2px_22px_-4px_rgba(93,96,127,0.2)] flex flex-col">
+        <div className="lg:col-span-1 sticky bg-white border border-slate-300 rounded-lg p-2 md:p-6 shadow-[0_2px_22px_-4px_rgba(93,96,127,0.2)] flex flex-col">
           <h2 className="text-xl font-semibold text-slate-800 mb-4">
             Your Vaults
           </h2>
@@ -559,7 +559,7 @@ const Dashboard = () => {
         </div>
 
         {/* Credentials Section */}
-        <div className="lg:col-span-2 bg-white border max-h-[88vh] overflow-auto border-slate-300 rounded-lg p-6 shadow-[0_2px_22px_-4px_rgba(93,96,127,0.2)] flex flex-col">
+        <div className="lg:col-span-2 bg-white border max-h-[88vh] overflow-auto border-slate-300 rounded-lg p-2 md:p-6 shadow-[0_2px_22px_-4px_rgba(93,96,127,0.2)] flex flex-col">
           <h2 className="text-xl font-semibold text-slate-800 mb-4">
             {selectedVaultId
               ? "Credentials"
@@ -585,7 +585,7 @@ const Dashboard = () => {
             {credentials.map((cred) => (
               <div
                 key={cred.id}
-                className="p-4 border relative border-gray-200 rounded-lg bg-white shadow-sm flex items-start gap-4 flex-row"
+                className="p-2 md:p-4 border relative border-gray-200 rounded-lg bg-white shadow-sm flex items-start gap-4 flex-row"
               >
                 <img src={`https://logo.clearbit.com/${cred.url}`} alt={cred.url} width={50} height={50} className="rounded-full" />
                 <div className="flex flex-start gap-1 flex-col">
@@ -612,7 +612,7 @@ const Dashboard = () => {
                     onClick={() =>
                       handleShowPassword(cred.password_encrypted, cred.iv)
                     } // Pass encrypted password and IV
-                    className="text-blue-600 hover:underline text-sm font-medium absolute bottom-4 right-4"
+                    className="text-blue-600 hover:underline text-sm font-medium absolute bottom-2 right-4"
                   >
                     Show Password
                   </button>
