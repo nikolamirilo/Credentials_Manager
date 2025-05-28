@@ -198,7 +198,7 @@ const Auth = ({signIn, signUp}) => {
             </form>
           </div>
 
-          <div className="max-md:mt-8">
+          <div className="hidden md:block max-md:mt-8">
             <img
               src="https://readymadeui.com/login-image.webp"
               className="w-full aspect-[71/50] max-md:w-4/5 mx-auto block object-cover"
