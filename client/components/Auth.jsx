@@ -1,23 +1,28 @@
 "use client"
 import { useRouter } from 'next/navigation'
 import React, { useState } from "react";
+import { AiOutlineLoading3Quarters } from "react-icons/ai";
 
 const Auth = ({signIn, signUp}) => {
   const [type, setType] = useState("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false)
   const [confirmPassword, setConfirmPassword] = useState("");
   const router = useRouter()
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true)
     if (type === "login") {
       const res = await signIn(email, password);
       if(res.isSuccessful){
-        router.push("/dashboard")
         localStorage.setItem("user_id", res.user_id)
+        router.push("/dashboard")
+        setLoading(true)
       }
     } else {
       await signUp(email, password, confirmPassword);
+      setLoading(true)
     }
   };
   return (
@@ -139,7 +144,7 @@ const Auth = ({signIn, signUp}) => {
                         className="h-4 w-4 shrink-0 text-blue-600 focus:ring-blue-500 border-slate-300 rounded"
                       />
                       <label
-                        for="remember-me"
+                        htmlFor="remember-me"
                         className="ml-3 block text-sm text-slate-500"
                       >
                         Remember me
@@ -161,7 +166,8 @@ const Auth = ({signIn, signUp}) => {
                       type="submit"
                       className="w-full shadow-xl py-2.5 px-4 text-[15px] font-medium tracking-wide rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none cursor-pointer"
                     >
-                      Sign in
+                      {loading ?<AiOutlineLoading3Quarters size={20} color='white' className='animate-spin mx-auto'/> : "Sign in"}
+                      
                     </button>
                     <p className="text-sm !mt-6 text-center text-slate-500">
                       Don't have an account{" "}
@@ -181,7 +187,7 @@ const Auth = ({signIn, signUp}) => {
                       type="submit"
                       className="w-full shadow-xl py-2.5 px-4 text-[15px] font-medium tracking-wide rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none cursor-pointer"
                     >
-                      Sign up
+                     {loading ?<AiOutlineLoading3Quarters size={20} color='white' className='animate-spin mx-auto'/> : "Sign up"}
                     </button>
                     <p className="text-sm !mt-6 text-center text-slate-500">
                       Already have an account{" "}

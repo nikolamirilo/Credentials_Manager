@@ -398,7 +398,7 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen flex flex-col relative bg-gray-100">
       {/* Header */}
-      <header className="bg-white shadow-md relative">
+      <header className="bg-white shadow-md fixed top-0 left-0 w-full z-10">
         <div className="px-4 py-4 flex justify-between items-center">
           {/* Logo/Title */}
           <div className="flex items-center space-x-2">
@@ -514,7 +514,7 @@ const Dashboard = () => {
         )}
       </header>
 
-      <main className="flex-1 px-2 py-4 md:px-6 md:py-6 grid lg:grid-cols-3 gap-4 md:gap-6">
+      <main className="flex-1 px-2 py-4 md:px-6 md:py-6 grid lg:grid-cols-3 gap-4 md:gap-6 mt-[9vh] md:mt-[7vh]">
         {/* Vaults Section */}
         <div className="lg:col-span-1 sticky bg-white border border-slate-300 rounded-lg p-2 md:p-6 shadow-[0_2px_22px_-4px_rgba(93,96,127,0.2)] flex flex-col">
           <h2 className="text-xl font-semibold text-slate-800 mb-4">
