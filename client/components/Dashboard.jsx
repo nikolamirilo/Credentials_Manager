@@ -2,9 +2,11 @@
 import React, { useState, useEffect, use } from "react";
 import { MdOutlineDeleteSweep } from "react-icons/md";
 import { Menu, X, Shield, Plus, Upload, LogOut } from "lucide-react";
+import { IoIosArrowDown, IoIosArrowUp } from "react-icons/io";
 import { useRouter } from 'next/navigation'
 import Loader from "./Loader";
-import {getData} from "../actions/server"
+import { getData } from "../actions/server"
+import { SiOpenmediavault } from "react-icons/si";
 
 const Dashboard = () => {
   const router = useRouter();
@@ -17,6 +19,7 @@ const Dashboard = () => {
   const [error, setError] = useState(null);
   const [message, setMessage] = useState("");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isOpenVaultMenu, setIsOpenVaultMenu] = useState(false)
 
   // State for modal visibility
   const [showAddVaultModal, setShowAddVaultModal] = useState(false);
@@ -390,7 +393,7 @@ const Dashboard = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen bg-white/80">
-      <Loader/>
+        <Loader />
       </div>
     );
   }
@@ -514,12 +517,15 @@ const Dashboard = () => {
         )}
       </header>
 
-      <main className="flex-1 px-2 py-4 md:px-6 md:py-6 grid lg:grid-cols-3 gap-4 md:gap-6 mt-[9vh] md:mt-[7vh]">
+      <main className="flex-1 px-2 py-4 md:px-6 md:py-6 grid lg:grid-cols-3 gap-4 md:gap-6 mt-[9vh] md:mt-[8vh] w-full max-w-[1500px] mx-auto">
         {/* Vaults Section */}
-        <div className="lg:col-span-1 sticky bg-white border border-slate-300 rounded-lg p-2 md:p-6 shadow-[0_2px_22px_-4px_rgba(93,96,127,0.2)] flex flex-col">
-          <h2 className="text-xl font-semibold text-slate-800 mb-4">
-            Your Vaults
-          </h2>
+        <div className="lg:col-span-1 sticky bg-white border h-fit border-slate-300 rounded-lg p-2 md:p-4 shadow-[0_2px_22px_-4px_rgba(93,96,127,0.2)] flex flex-col">
+          <div className="flex w-full justify-between p-2 items-center flex-row mb-2">
+            <h2 className="text-xl font-semibold text-slate-800">
+              {isOpenVaultMenu ? "Your Vaults" : vaults.find(vault => vault.id === selectedVaultId)?.name}
+            </h2>
+            <button onClick={() => { setIsOpenVaultMenu(!isOpenVaultMenu) }} className="flex items-center justify-center p-0">{isOpenVaultMenu ? <IoIosArrowDown size={30} /> : <IoIosArrowUp size={30} />}</button>
+          </div>
           {message && (
             <div
               className="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded relative mb-4"
@@ -533,14 +539,13 @@ const Dashboard = () => {
             {vaults.length === 0 && !loading && (
               <p className="text-slate-500">No vaults found. Add one!</p>
             )}
-            {vaults.map((vault) => (
+            {isOpenVaultMenu && vaults.map((vault) => (
               <div
                 key={vault.id}
-                className={`p-4 border rounded-lg cursor-pointer relative transition duration-200 ease-in-out ${
-                  selectedVaultId === vault.id
-                    ? "bg-blue-100 border-blue-500 shadow-md"
-                    : "bg-gray-50 border-gray-200 hover:bg-gray-100"
-                }`}
+                className={`p-4 border rounded-lg cursor-pointer relative transition duration-200 ease-in-out ${selectedVaultId === vault.id
+                  ? "bg-blue-100 border-blue-500 shadow-md"
+                  : "bg-gray-50 border-gray-200 hover:bg-gray-100"
+                  }`}
                 onClick={() => setSelectedVaultId(vault.id)}
               >
                 <h3 className="font-medium text-slate-800">{vault.name}</h3>
@@ -558,8 +563,9 @@ const Dashboard = () => {
           </div>
         </div>
 
+
         {/* Credentials Section */}
-        <div className="lg:col-span-2 bg-white border max-h-[88vh] overflow-auto border-slate-300 rounded-lg p-2 md:p-6 shadow-[0_2px_22px_-4px_rgba(93,96,127,0.2)] flex flex-col">
+        <div className="lg:col-span-2 bg-white border max-h-[85vh] overflow-auto border-slate-300 rounded-lg p-2 md:p-6 shadow-[0_2px_22px_-4px_rgba(93,96,127,0.2)] flex flex-col">
           <h2 className="text-xl font-semibold text-slate-800 mb-4">
             {selectedVaultId
               ? "Credentials"
@@ -589,33 +595,33 @@ const Dashboard = () => {
               >
                 <img src={`https://logo.clearbit.com/${cred.url}`} alt={cred.url} width={50} height={50} className="rounded-full" />
                 <div className="flex flex-start gap-1 flex-col">
-                <h3 className="font-medium text-slate-800">{cred.username}</h3>
-                <p className="text-sm text-slate-600">
-                  URL:{" "}
-                  <a
-                    href={cred.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-500 hover:underline"
-                  >
-                    {cred.url || "N/A"}
-                  </a>
-                </p>
-                <div className="flex items-center justify-between mt-2">
-                  <span className="text-sm text-slate-500 italic">
-                    Password: Encrypted
-                  </span>
+                  <h3 className="font-medium text-slate-800">{cred.username}</h3>
+                  <p className="text-sm text-slate-600">
+                    URL:{" "}
+                    <a
+                      href={cred.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-500 hover:underline"
+                    >
+                      {cred.url || "N/A"}
+                    </a>
+                  </p>
+                  <div className="flex items-center justify-between mt-2">
+                    <span className="text-sm text-slate-500 italic">
+                      Password: Encrypted
+                    </span>
 
-                </div>
+                  </div>
                 </div>
                 <button
-                    onClick={() =>
-                      handleShowPassword(cred.password_encrypted, cred.iv)
-                    } // Pass encrypted password and IV
-                    className="text-blue-600 hover:underline text-sm font-medium absolute bottom-2 right-4"
-                  >
-                    Show Password
-                  </button>
+                  onClick={() =>
+                    handleShowPassword(cred.password_encrypted, cred.iv)
+                  } // Pass encrypted password and IV
+                  className="text-blue-600 hover:underline text-sm font-medium absolute bottom-2 right-4"
+                >
+                  Show Password
+                </button>
               </div>
             ))}
           </div>
@@ -820,11 +826,10 @@ const Dashboard = () => {
               <button
                 type="button"
                 onClick={() => handleImportCSV()}
-                className={`py-2 px-4 text-[15px] font-medium tracking-wide rounded-lg text-white ${
-                  csvData && !importing
-                    ? "bg-blue-600 hover:bg-blue-700"
-                    : "bg-gray-400 cursor-not-allowed"
-                } focus:outline-none`}
+                className={`py-2 px-4 text-[15px] font-medium tracking-wide rounded-lg text-white ${csvData && !importing
+                  ? "bg-blue-600 hover:bg-blue-700"
+                  : "bg-gray-400 cursor-not-allowed"
+                  } focus:outline-none`}
                 disabled={!csvData || importing}
               >
                 {importing ? "Importing..." : "Import"}
