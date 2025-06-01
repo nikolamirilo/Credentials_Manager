@@ -19,6 +19,8 @@ const Auth = ({signIn, signUp}) => {
         localStorage.setItem("user_id", res.user_id)
         router.push("/dashboard")
         setLoading(true)
+      }else{
+        alert("Error occured")
       }
     } else {
       await signUp(email, password, confirmPassword);

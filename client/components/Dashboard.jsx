@@ -2,11 +2,10 @@
 import React, { useState, useEffect, use } from "react";
 import { MdOutlineDeleteSweep } from "react-icons/md";
 import { Menu, X, Shield, Plus, Upload, LogOut } from "lucide-react";
-import { IoIosArrowDown, IoIosArrowUp } from "react-icons/io";
+import { IoIosArrowUp } from "react-icons/io";
 import { useRouter } from 'next/navigation'
 import Loader from "./Loader";
 import { getData } from "../actions/server"
-import { SiOpenmediavault } from "react-icons/si";
 
 const Dashboard = () => {
   const router = useRouter();
@@ -20,6 +19,7 @@ const Dashboard = () => {
   const [message, setMessage] = useState("");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isOpenVaultMenu, setIsOpenVaultMenu] = useState(false)
+  const [isCopied, setIsCopied] = useState(false)
 
   // State for modal visibility
   const [showAddVaultModal, setShowAddVaultModal] = useState(false);
@@ -517,14 +517,24 @@ const Dashboard = () => {
         )}
       </header>
 
-      <main className="flex-1 px-2 py-4 md:px-6 md:py-6 grid lg:grid-cols-3 gap-4 md:gap-6 mt-[9vh] md:mt-[8vh] w-full max-w-[1500px] mx-auto">
+      <main className="flex-1 px-2 py-4 content-baseline md:px-6 md:py-6 grid lg:grid-cols-3 gap-4 md:gap-6 mt-[9vh] md:mt-[8vh] w-full max-w-[1500px] mx-auto">
         {/* Vaults Section */}
         <div className="lg:col-span-1 sticky bg-white border h-fit border-slate-300 rounded-lg p-2 md:p-4 shadow-[0_2px_22px_-4px_rgba(93,96,127,0.2)] flex flex-col">
           <div className="flex w-full justify-between p-2 items-center flex-row mb-2">
             <h2 className="text-xl font-semibold text-slate-800">
               {isOpenVaultMenu ? "Your Vaults" : vaults.find(vault => vault.id === selectedVaultId)?.name}
             </h2>
-            <button onClick={() => { setIsOpenVaultMenu(!isOpenVaultMenu) }} className="flex items-center justify-center p-0">{isOpenVaultMenu ? <IoIosArrowDown size={30} /> : <IoIosArrowUp size={30} />}</button>
+            <button
+              onClick={() => setIsOpenVaultMenu(!isOpenVaultMenu)}
+              className="flex items-center justify-center p-0"
+            >
+              <IoIosArrowUp
+                size={30}
+                className={`transform transition-transform duration-300 ease-in-out ${isOpenVaultMenu ? 'rotate-180' : 'rotate-0'
+                  }`}
+              />
+            </button>
+
           </div>
           {message && (
             <div
@@ -620,7 +630,7 @@ const Dashboard = () => {
                   } // Pass encrypted password and IV
                   className="text-blue-600 hover:underline text-sm font-medium absolute bottom-2 right-4"
                 >
-                  Show Password
+                  Show
                 </button>
               </div>
             ))}
@@ -756,18 +766,28 @@ const Dashboard = () => {
         <div className="fixed inset-0 bg-black/20 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg p-6 shadow-xl max-w-md w-full">
             <h3 className="text-xl font-semibold text-slate-800 mb-4">
-              Encrypted Password (Decrypted)
+              Decrypted Password
             </h3>
             <div className="bg-gray-100 p-4 rounded-lg break-words">
               <p className="text-lg font-mono text-slate-800">
                 {displayedPassword}
-              </p>{" "}
-              {/* Now shows the encrypted string */}
+              </p>
             </div>
-            <div className="flex justify-end mt-4">
+            <div className="flex justify-end mt-4 space-x-2">
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(displayedPassword);
+                  setIsCopied(true);
+                  setTimeout(() => setIsCopied(false), 2000); 
+                }}
+                className={`py-2 px-4 text-[15px] font-medium tracking-wide rounded-lg text-white ${isCopied ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'
+                  }`}
+              >
+                {isCopied ? 'Copied' : 'Copy'}
+              </button>
               <button
                 onClick={() => setShowDecryptedPasswordModal(false)}
-                className="py-2 px-4 text-[15px] font-medium tracking-wide rounded-lg text-slate-700 border border-slate-300 hover:bg-gray-100 focus:outline-none"
+                className="py-2 px-4 text-[15px] font-medium tracking-wide rounded-lg text-slate-700 border border-slate-300 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
               >
                 Close
               </button>
