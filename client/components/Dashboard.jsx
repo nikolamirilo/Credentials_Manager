@@ -598,7 +598,7 @@ const Dashboard = () => {
                 Please select a vault from the left to view its credentials.
               </p>
             )}
-            {credentials.map((cred) => (
+            {credentials.sort((a, b) => a.url.localeCompare(b.url)).map((cred) => (
               <div
                 key={cred.id}
                 className="p-2 md:p-4 border relative border-gray-200 rounded-lg bg-white shadow-sm flex items-start gap-4 flex-row"
