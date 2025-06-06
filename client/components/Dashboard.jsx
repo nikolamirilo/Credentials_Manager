@@ -20,6 +20,7 @@ const Dashboard = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isOpenVaultMenu, setIsOpenVaultMenu] = useState(false)
   const [isCopied, setIsCopied] = useState(false)
+  const [searchQuery, setSearchQuery] = useState("");
 
   // State for modal visibility
   const [showAddVaultModal, setShowAddVaultModal] = useState(false);
@@ -39,6 +40,15 @@ const Dashboard = () => {
   const [csvData, setCsvData] = useState(null);
   const [parsingError, setParsingError] = useState(null);
   const [importing, setImporting] = useState(false);
+
+  // Filter credentials based on search query
+  const filteredCredentials = credentials.filter((cred) => {
+    const searchLower = searchQuery.toLowerCase();
+    return (
+      cred.username.toLowerCase().includes(searchLower) ||
+      cred.url.toLowerCase().includes(searchLower)
+    );
+  });
 
   // Get user ID from localStorage on component mount
   useEffect(() => {
@@ -173,9 +183,8 @@ const Dashboard = () => {
       const updatedVaultsResponse = await getData(
         `/vaults?user_id=${userId}`
       );
-      const updatedVaultsData = await updatedVaultsResponse.json();
       if (updatedVaultsResponse.ok) {
-        setVaults(updatedVaultsData);
+        setVaults(updatedVaultsResponse.data);
       }
     } catch (err) {
       setMessage(`Error deleting vault: ${err.message}`);
@@ -380,6 +389,27 @@ const Dashboard = () => {
     }
   };
 
+  // Function to handle sample CSV download
+  const handleDownloadSample = () => {
+    const sampleData = [
+      ['username', 'password', 'url'],
+      ['john.doe@example.com', 'password123', 'https://example.com'],
+      ['jane.smith@company.com', 'securepass456', 'https://company.com']
+    ];
+    
+    const csvContent = sampleData.map(row => row.join(',')).join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'sample_credentials.csv');
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   if (!userId && !message) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-100">
@@ -563,7 +593,10 @@ const Dashboard = () => {
                   Created: {new Date(vault.created_at).toLocaleDateString()}
                 </p>
                 <button
-                  onClick={() => handleDeleteVault(vault.id)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDeleteVault(vault.id);
+                  }}
                   className="z-100 absolute top-2 right-2 text-red-400 cursor-pointer hover:text-red-500"
                 >
                   <MdOutlineDeleteSweep size={30} />
@@ -576,11 +609,32 @@ const Dashboard = () => {
 
         {/* Credentials Section */}
         <div className="lg:col-span-2 bg-white border max-h-[85vh] overflow-auto border-slate-300 rounded-lg p-2 md:p-6 shadow-[0_2px_22px_-4px_rgba(93,96,127,0.2)] flex flex-col">
-          <h2 className="text-xl font-semibold text-slate-800 mb-4">
-            {selectedVaultId
-              ? "Credentials"
-              : "Select a Vault to view Credentials"}
-          </h2>
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+            <h2 className="text-xl font-semibold text-slate-800">
+              {selectedVaultId
+                ? "Credentials"
+                : "Select a Vault to view Credentials"}
+            </h2>
+            {selectedVaultId && (
+              <div className="relative w-full sm:w-64">
+                <input
+                  type="text"
+                  placeholder="Search credentials"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full px-4 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery("")}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
           {loading && selectedVaultId && (
             <p className="text-slate-500">Loading credentials...</p>
           )}
@@ -588,9 +642,11 @@ const Dashboard = () => {
             <p className="text-red-500">Error: {error}</p>
           )}
           <div className="space-y-3 flex-1 overflow-y-auto">
-            {selectedVaultId && credentials.length === 0 && !loading && (
+            {selectedVaultId && filteredCredentials.length === 0 && !loading && (
               <p className="text-slate-500">
-                No credentials found in this vault. Add one!
+                {searchQuery
+                  ? "No credentials match your search."
+                  : "No credentials found in this vault. Add one!"}
               </p>
             )}
             {!selectedVaultId && (
@@ -598,7 +654,7 @@ const Dashboard = () => {
                 Please select a vault from the left to view its credentials.
               </p>
             )}
-            {credentials.sort((a, b) => a.url.localeCompare(b.url)).map((cred) => (
+            {filteredCredentials.sort((a, b) => a.url.localeCompare(b.url)).map((cred) => (
               <div
                 key={cred.id}
                 className="p-2 md:p-4 border relative border-gray-200 rounded-lg bg-white shadow-sm flex items-start gap-4 flex-row"
@@ -696,7 +752,7 @@ const Dashboard = () => {
                   htmlFor="credUsername"
                   className="text-slate-800 text-sm font-medium mb-2 block"
                 >
-                  Username
+                  Name
                 </label>
                 <input
                   type="text"
@@ -796,7 +852,7 @@ const Dashboard = () => {
         </div>
       )}
 
-      {/* Import CSV Modal (will add content next) */}
+      {/* Import CSV Modal */}
       {showImportCSVModal && (
         <div className="fixed inset-0 bg-black/20 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg p-6 shadow-xl max-w-md w-full">
@@ -804,16 +860,32 @@ const Dashboard = () => {
               Import Credentials from CSV
             </h3>
             <h4 className="mb-2">Destination vault: <i>{vaults.find((v) => v.id === selectedVaultId)?.name || ""}</i></h4>
-            {/* File input and instructions will go here */}
-            <p>
-              Select a CSV file to import. The file should ideally have columns:{" "}
-              <strong>username, password, url</strong> (url is optional).
-            </p>
+            
+            <div className="p-4 bg-slate-50 rounded-lg">
+              <p className="text-sm text-slate-600 mb-2">
+                Your CSV file should have the following columns:
+              </p>
+              <ul className="text-sm text-slate-600 list-disc list-inside mb-3">
+                <li>username (required)</li>
+                <li>password (required)</li>
+                <li>url (optional)</li>
+              </ul>
+              <button
+                onClick={handleDownloadSample}
+                className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
+                Download Sample CSV
+              </button>
+            </div>
+
             <input
               type="file"
               accept=".csv"
               onChange={handleFileChange}
-              className="mt-4 mb-6 border border-dashed border-slate-400 rounded-lg p-2 cursor-pointer"
+              className="mt-4 mb-6 border border-dashed border-slate-400 rounded-lg p-2 cursor-pointer w-full"
             />
 
             {parsingError && (
