@@ -659,7 +659,7 @@ const Dashboard = () => {
                 key={cred.id}
                 className="p-2 md:p-4 border relative border-gray-200 rounded-lg bg-white shadow-sm flex items-start gap-4 flex-row"
               >
-                <img src={`https://logo.clearbit.com/${cred.url}`} alt={cred.url} width={50} height={50} className="rounded-full" />
+                <img src={cred.url != null ? `https://logo.clearbit.com/${cred.url}` : 'https://t4.ftcdn.net/jpg/03/14/29/07/360_F_314290715_PDMAmK7Bbhw73Y57eT8sI57hrpddeaEu.jpg'} alt={cred.url} width={50} height={50} className="rounded-full" />
                 <div className="flex flex-start gap-1 flex-col">
                   <h3 className="font-medium text-slate-800">{cred.username}</h3>
                   <p className="text-sm text-slate-600">
