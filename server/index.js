@@ -671,6 +671,89 @@ app.post('/import-credentials', async (req, res) => {
     }
 });
 
+/**
+ * @route PUT /credentials/:credential_id
+ * @description Update a credential (username, password, url, or move to another vault)
+ * @param {string} credential_id - UUID of the credential to update
+ * @body {string} user_id - UUID of the user (for authorization)
+ * @body {string} [username] - New username (optional)
+ * @body {string} [password] - New password (optional, will be encrypted)
+ * @body {string} [url] - New URL (optional)
+ * @body {string} [vault_id] - New vault ID to move the credential (optional)
+ * @returns {object} { message: "Credential updated" } on success
+ * @returns {object} Error message on failure (e.g., 400, 401, 404, 500)
+ */
+app.put('/credentials/:credential_id', async (req, res) => {
+    const { credential_id } = req.params;
+    const { user_id, username, password, url, vault_id } = req.body;
+
+    // Basic input validation
+    if (!credential_id || !user_id) {
+        return res.status(400).json({ message: 'Credential ID and user ID are required.' });
+    }
+
+    try {
+        // Validate if credential exists and check ownership through vault
+        const { data: credentialData, error: credentialError } = await supabase
+            .from('credentials')
+            .select(`
+                id,
+                vault_id,
+                vaults!inner (
+                    user_id
+                )
+            `)
+            .eq('id', credential_id)
+            .single();
+
+        if (credentialError && credentialError.code !== 'PGRST116') {
+            console.error('Supabase credential validation error:', credentialError);
+            return res.status(500).json({ message: 'Internal Server Error', detail: credentialError.message });
+        }
+
+        if (!credentialData) {
+            return res.status(404).json({ message: 'Not Found - Credential not found' });
+        }
+
+        // Check if the credential belongs to a vault owned by the requesting user
+        if (credentialData.vaults.user_id !== user_id) {
+            return res.status(401).json({ message: 'Unauthorized - You can only update credentials from your own vaults' });
+        }
+
+        // Prepare update object
+        const updateObj = {};
+        if (username !== undefined) updateObj.username = username;
+        if (url !== undefined) updateObj.url = url;
+        if (vault_id !== undefined) updateObj.vault_id = vault_id;
+        if (password !== undefined) {
+            const { iv, content: encryptedPassword } = encrypt(password);
+            updateObj.password_encrypted = encryptedPassword;
+            updateObj.iv = iv;
+        }
+
+        if (Object.keys(updateObj).length === 0) {
+            return res.status(400).json({ message: 'No fields to update.' });
+        }
+
+        // Update the credential
+        const { data: updatedCredential, error: updateError } = await supabase
+            .from('credentials')
+            .update(updateObj)
+            .eq('id', credential_id)
+            .select();
+
+        if (updateError) {
+            console.error('Supabase credential update error:', updateError);
+            return res.status(500).json({ message: 'Internal Server Error', detail: updateError.message });
+        }
+
+        res.status(200).json({ message: 'Credential updated' });
+    } catch (err) {
+        console.error('Server error during credential update:', err);
+        res.status(500).json({ message: 'Internal Server Error', detail: err.message });
+    }
+});
+
 // --- Start the Server ---
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
