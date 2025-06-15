@@ -1,33 +1,38 @@
-"use client"
-import { useRouter } from 'next/navigation'
-import React, { useState } from "react";
+"use client";
+import { useRouter } from "next/navigation";
+import React, { useState, useEffect } from "react";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
-import Image from 'next/image';
+import Image from "next/image";
 
-const Auth = ({signIn, signUp}) => {
+const Auth = ({ signIn, signUp }) => {
   const [type, setType] = useState("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(false);
   const [confirmPassword, setConfirmPassword] = useState("");
-  const router = useRouter()
+  const router = useRouter();
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true)
+    setLoading(true);
     if (type === "login") {
       const res = await signIn(email, password);
-      if(res.isSuccessful){
-        localStorage.setItem("user_id", res.user_id)
-        router.push("/dashboard")
-        setLoading(true)
-      }else{
-        alert("Error occured")
+      if (res.isSuccessful) {
+        localStorage.setItem("user_id", res.user_id);
+        router.push("/dashboard");
+        setLoading(true);
+      } else {
+        alert("Error occured");
       }
     } else {
       await signUp(email, password, confirmPassword);
-      setLoading(true)
+      setLoading(true);
     }
   };
+  useEffect(() => {
+    if (localStorage.getItem("user_id")) {
+      router.push("/dashboard");
+    }
+  }, []);
   return (
     <div className="min-h-screen flex fle-col items-center justify-center">
       <div className="py-6 px-4">
@@ -39,7 +44,9 @@ const Auth = ({signIn, signUp}) => {
                   {type == "login" ? "Sign in" : "Sign up"}
                 </h3>
                 <p className="text-slate-500 text-sm mt-6 leading-relaxed">
-                  {type == "login" ? "Sign in to your account and explore a world of possibilities. Your journey begins here." : "Sign up to create an account and start your journey."}
+                  {type == "login"
+                    ? "Sign in to your account and explore a world of possibilities. Your journey begins here."
+                    : "Sign up to create an account and start your journey."}
                 </p>
               </div>
 
@@ -130,8 +137,15 @@ const Auth = ({signIn, signUp}) => {
                       type="submit"
                       className="w-full shadow-xl py-2.5 px-4 text-[15px] font-medium tracking-wide rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none cursor-pointer"
                     >
-                      {loading ?<AiOutlineLoading3Quarters size={20} color='white' className='animate-spin mx-auto'/> : "Sign in"}
-                      
+                      {loading ? (
+                        <AiOutlineLoading3Quarters
+                          size={20}
+                          color="white"
+                          className="animate-spin mx-auto"
+                        />
+                      ) : (
+                        "Sign in"
+                      )}
                     </button>
                     <p className="text-sm !mt-6 text-center text-slate-500">
                       Don't have an account{" "}
@@ -151,7 +165,15 @@ const Auth = ({signIn, signUp}) => {
                       type="submit"
                       className="w-full shadow-xl py-2.5 px-4 text-[15px] font-medium tracking-wide rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none cursor-pointer"
                     >
-                     {loading ?<AiOutlineLoading3Quarters size={20} color='white' className='animate-spin mx-auto'/> : "Sign up"}
+                      {loading ? (
+                        <AiOutlineLoading3Quarters
+                          size={20}
+                          color="white"
+                          className="animate-spin mx-auto"
+                        />
+                      ) : (
+                        "Sign up"
+                      )}
                     </button>
                     <p className="text-sm !mt-6 text-center text-slate-500">
                       Already have an account{" "}
