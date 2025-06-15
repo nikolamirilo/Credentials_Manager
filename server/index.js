@@ -234,33 +234,32 @@ app.get('/users/all', async (req, res) => {
 app.post('/vaults', async (req, res) => {
     const { user_id, name } = req.body;
 
-    // Basic input validation
     if (!user_id || !name) {
         return res.status(400).json({ message: 'User ID and vault name are required.' });
     }
 
-    // Optional: Validate user_id exists in 'users' table (more robust in production)
     try {
-        const { data: userData, error: userError } = await supabase
-            .from('users')
-            .select('id')
-            .eq('id', user_id)
-            .single();
+        // Get the highest order value for this user's vaults
+        const { data: maxOrderData, error: maxOrderError } = await supabase
+            .from('vaults')
+            .select('vault_order')
+            .eq('user_id', user_id)
+            .order('vault_order', { ascending: false })
+            .limit(1);
 
-        if (userError && userError.code !== 'PGRST116') {
-            console.error('Supabase user validation error:', userError);
-            return res.status(500).json({ message: 'Internal Server Error', detail: userError.message });
+        if (maxOrderError) {
+            console.error('Supabase max order error:', maxOrderError);
+            return res.status(500).json({ message: 'Internal Server Error', detail: maxOrderError.message });
         }
 
-        if (!userData) {
-            return res.status(401).json({ message: 'Unauthorized - Invalid user ID' });
-        }
+        // Calculate new order value (0 if no vaults exist, otherwise max + 1)
+        const newOrder = maxOrderData.length > 0 ? maxOrderData[0].vault_order + 1 : 0;
 
-        // Insert new vault
+        // Insert new vault with order
         const { data: vaultData, error: vaultError } = await supabase
             .from('vaults')
             .insert([
-                { user_id, name }
+                { user_id, name, vault_order: newOrder }
             ])
             .select();
 
@@ -270,7 +269,6 @@ app.post('/vaults', async (req, res) => {
         }
 
         res.status(201).json({ message: 'Vault created', vault_id: vaultData[0].id });
-
     } catch (err) {
         console.error('Server error during vault creation:', err);
         res.status(500).json({ message: 'Internal Server Error', detail: err.message });
@@ -292,27 +290,11 @@ app.get('/vaults', async (req, res) => {
     }
 
     try {
-        // Optional: Validate user_id exists in 'users' table
-        const { data: userData, error: userError } = await supabase
-            .from('users')
-            .select('id')
-            .eq('id', user_id)
-            .single();
-
-        if (userError && userError.code !== 'PGRST116') {
-            console.error('Supabase user validation error:', userError);
-            return res.status(500).json({ message: 'Internal Server Error', detail: userError.message });
-        }
-
-        if (!userData) {
-            return res.status(401).json({ message: 'Unauthorized - Invalid user ID' });
-        }
-
-        // Retrieve vaults for the given user_id
         const { data: vaultsData, error: vaultsError } = await supabase
             .from('vaults')
-            .select('id, user_id, name, created_at')
-            .eq('user_id', user_id);
+            .select('id, user_id, name, created_at, vault_order')
+            .eq('user_id', user_id)
+            .order('vault_order', { ascending: true });
 
         if (vaultsError) {
             console.error('Supabase get vaults error:', vaultsError);
@@ -320,7 +302,6 @@ app.get('/vaults', async (req, res) => {
         }
 
         res.status(200).json(vaultsData);
-
     } catch (err) {
         console.error('Server error getting user vaults:', err);
         res.status(500).json({ message: 'Internal Server Error', detail: err.message });
@@ -397,6 +378,66 @@ app.delete('/vaults/:vault_id', async (req, res) => {
 
     } catch (err) {
         console.error('Server error during vault deletion:', err);
+        res.status(500).json({ message: 'Internal Server Error', detail: err.message });
+    }
+});
+
+/**
+ * @route PUT /vaults/:vault_id
+ * @description Update a vault's name
+ * @param {string} vault_id - UUID of the vault to update
+ * @body {string} user_id - UUID of the user (for authorization)
+ * @body {string} name - New name for the vault
+ * @returns {object} { message: "Vault updated" } on success
+ * @returns {object} Error message on failure (e.g., 400, 401, 404, 500)
+ */
+app.put('/vaults/:vault_id', async (req, res) => {
+    const { vault_id } = req.params;
+    const { user_id, name } = req.body;
+
+    // Basic input validation
+    if (!vault_id || !user_id || !name) {
+        return res.status(400).json({ message: 'Vault ID, user ID, and name are required.' });
+    }
+
+    try {
+        // Validate if vault exists and belongs to the user
+        const { data: vaultData, error: vaultError } = await supabase
+            .from('vaults')
+            .select('id, user_id')
+            .eq('id', vault_id)
+            .single();
+
+        if (vaultError && vaultError.code !== 'PGRST116') {
+            console.error('Supabase vault validation error:', vaultError);
+            return res.status(500).json({ message: 'Internal Server Error', detail: vaultError.message });
+        }
+
+        if (!vaultData) {
+            return res.status(404).json({ message: 'Not Found - Vault not found' });
+        }
+
+        // Check if the vault belongs to the requesting user
+        if (vaultData.user_id !== user_id) {
+            return res.status(401).json({ message: 'Unauthorized - You can only update your own vaults' });
+        }
+
+        // Update the vault
+        const { data: updatedVault, error: updateError } = await supabase
+            .from('vaults')
+            .update({ name })
+            .eq('id', vault_id)
+            .select();
+
+        if (updateError) {
+            console.error('Supabase vault update error:', updateError);
+            return res.status(500).json({ message: 'Internal Server Error', detail: updateError.message });
+        }
+
+        res.status(200).json({ message: 'Vault updated', vault: updatedVault[0] });
+
+    } catch (err) {
+        console.error('Server error during vault update:', err);
         res.status(500).json({ message: 'Internal Server Error', detail: err.message });
     }
 });

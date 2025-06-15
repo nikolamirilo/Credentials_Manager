@@ -1,28 +1,74 @@
-import React from "react";
+import React, { useState } from "react";
 import { MdOutlineDeleteSweep } from "react-icons/md";
+import { BiSolidEditAlt } from "react-icons/bi";
 
-const SingleVault = ({ vault, selectedVaultId, setSelectedVaultId, handleDeleteVault }) => (
-  <div
-    className={`p-4 border rounded-lg cursor-pointer relative transition duration-200 ease-in-out ${selectedVaultId === vault.id
-      ? "bg-blue-100 border-blue-500 shadow-md"
-      : "bg-gray-50 border-gray-200 hover:bg-gray-100"
-      }`}
-    onClick={() => setSelectedVaultId(vault.id)}
-  >
-    <h3 className="font-medium text-slate-800">{vault.name}</h3>
-    <p className="text-sm text-slate-500">
-      Created: {new Date(vault.created_at).toLocaleDateString()}
-    </p>
-    <button
-      onClick={e => {
-        e.stopPropagation();
-        handleDeleteVault(vault.id);
-      }}
-      className="z-100 absolute top-2 right-2 text-red-400 cursor-pointer hover:text-red-500"
+const SingleVault = ({ 
+  vault, 
+  selectedVaultId, 
+  setSelectedVaultId, 
+  handleDeleteVault, 
+  onDropCredential,
+  handleOpenEditVault
+}) => {
+  const [isDragOver, setIsDragOver] = useState(false);
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    setIsDragOver(false);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    const credentialId = e.dataTransfer.getData('credentialId');
+    if (credentialId) {
+      onDropCredential(credentialId, vault.id);
+    }
+  };
+
+  return (
+    <div
+      className={`flex items-center justify-between p-2 rounded-lg cursor-pointer transition-colors ${
+        selectedVaultId === vault.id
+          ? "bg-slate-100"
+          : "hover:bg-slate-50"
+      } ${isDragOver ? "border-2 border-blue-500" : ""}`}
+      onClick={() => setSelectedVaultId(vault.id)}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
     >
-      <MdOutlineDeleteSweep size={30} />
-    </button>
-  </div>
-);
+      <div className="flex items-center gap-2">
+        <span className="text-slate-700">{vault.name}</span>
+      </div>
+      <div className="flex items-center gap-2">
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            handleOpenEditVault(vault);
+          }}
+          className="p-1 hover:bg-slate-200 rounded-full transition-colors"
+        >
+          <BiSolidEditAlt className="text-slate-600" size={20} />
+        </button>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            handleDeleteVault(vault.id);
+          }}
+          className="p-1 hover:bg-slate-200 rounded-full transition-colors"
+        >
+          <MdOutlineDeleteSweep className="text-red-400 hover:text-red-500" size={20}/>
+        </button>
+      </div>
+    </div>
+  );
+};
 
 export default SingleVault; 

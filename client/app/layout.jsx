@@ -3,10 +3,10 @@ import "./globals.css";
 import { Providers } from "./providers";
 
 const poppins = Poppins({
- weight: ['400', '600'],
- subsets: ['latin'],
- display: 'swap',
-})
+  weight: ["400", "600"],
+  subsets: ["latin"],
+  display: "swap",
+});
 
 export const metadata = {
   title: "Secret Manager",
@@ -16,9 +16,7 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body
-        className={poppins.className}
-      >
+      <body className={poppins.className}>
         <Providers>{children}</Providers>
       </body>
     </html>

@@ -15,6 +15,7 @@ import ImportCSVModal from "./ImportCSVModal";
 import EditCredentialModal from "./EditCredentialModal";
 import Header from "./Header";
 import MobileMenu from "./MobileMenu";
+import EditVaultModal from "./EditVaultModal";
 
 const Dashboard = () => {
   const router = useRouter();
@@ -57,6 +58,11 @@ const Dashboard = () => {
   const [csvData, setCsvData] = useState(null);
   const [parsingError, setParsingError] = useState(null);
   const [importing, setImporting] = useState(false);
+
+  // Add new state for edit vault modal
+  const [showEditVaultModal, setShowEditVaultModal] = useState(false);
+  const [editVaultId, setEditVaultId] = useState(null);
+  const [editVaultName, setEditVaultName] = useState("");
 
   // Filter credentials based on search query
   const filteredCredentials = credentials.filter((cred) => {
@@ -110,6 +116,16 @@ const Dashboard = () => {
       setNewVaultName("");
       setShowAddVaultModal(false);
       setIsMobileMenuOpen(false);
+
+      // Refresh vaults list
+      const updatedVaultsResponse = await getData(`/vaults?user_id=${userId}`);
+      if (updatedVaultsResponse.ok) {
+        setVaults(updatedVaultsResponse.data);
+        // Set the newly created vault as selected
+        if (updatedVaultsResponse.data.length > 0) {
+          setSelectedVaultId(updatedVaultsResponse.data[updatedVaultsResponse.data.length - 1].id);
+        }
+      }
     } catch (err) {
       console.log(`Error adding vault: ${err.message}`);
     } finally {
@@ -117,8 +133,9 @@ const Dashboard = () => {
     }
   };
 
-  async function handleDeleteVault(vaultId) {
-    console.log("Deleting vault with ID:", vaultId);
+  const handleDeleteVault = async (vaultId) => {
+    if (!window.confirm("Are you sure you want to delete this vault? All credentials in this vault will be deleted.")) return;
+    
     try {
       const response = await getData(
         `/vaults/${vaultId}?user_id=${userId}`,
@@ -130,12 +147,25 @@ const Dashboard = () => {
         throw new Error("Failed to delete vault");
       }
       setMessage("Vault deleted successfully!");
+
+      // Refresh vaults list
+      const updatedVaultsResponse = await getData(`/vaults?user_id=${userId}`);
+      if (updatedVaultsResponse.ok) {
+        setVaults(updatedVaultsResponse.data);
+        // Select the first vault if available
+        if (updatedVaultsResponse.data.length > 0) {
+          setSelectedVaultId(updatedVaultsResponse.data[0].id);
+        } else {
+          setSelectedVaultId(null);
+          setCredentials([]);
+        }
+      }
     } catch (err) {
       console.log(`Error deleting vault: ${err.message}`);
     } finally {
       revalidateData();
     }
-  }
+  };
 
   const handleAddCredential = async (e) => {
     e.preventDefault();
@@ -170,6 +200,12 @@ const Dashboard = () => {
       setNewCredentialPassword("");
       setNewCredentialUrl("");
       setShowAddCredentialModal(false);
+
+      // Refresh credentials list
+      const updatedCredentialsResponse = await getData(`/credentials/${selectedVaultId}`);
+      if (updatedCredentialsResponse.ok) {
+        setCredentials(updatedCredentialsResponse.data);
+      }
     } catch (err) {
       console.log(`Error adding credential: ${err.message}`);
     } finally {
@@ -308,22 +344,29 @@ const Dashboard = () => {
         vault_id: editCredentialVaultId,
       };
       if (editCredentialPassword) body.password = editCredentialPassword;
+      
       const response = await getData(`/credentials/${editCredentialId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
       const data = response.data;
+      
       if (!response.ok) {
         throw new Error(data.message || "Failed to update credential");
       }
       setMessage("Credential updated successfully!");
       setShowEditCredentialModal(false);
-      // Refresh credentials
-      const updatedCredentialsResponse = await getData(`/credentials/${selectedVaultId}`);
-      const updatedCredentialsData = await updatedCredentialsResponse.json();
-      if (updatedCredentialsResponse.ok) {
-        setCredentials(updatedCredentialsData);
+
+      // Refresh credentials list for both source and target vaults
+      if (editCredentialVaultId === selectedVaultId) {
+        const updatedCredentialsResponse = await getData(`/credentials/${selectedVaultId}`);
+        if (updatedCredentialsResponse.ok) {
+          setCredentials(updatedCredentialsResponse.data);
+        }
+      } else {
+        // If the credential was moved to a different vault, clear the current credentials
+        setCredentials([]);
       }
     } catch (err) {
       setMessage(`Error updating credential: ${err.message}`);
@@ -335,6 +378,7 @@ const Dashboard = () => {
   // Handler to delete credential
   const handleDeleteCredential = async (credId) => {
     if (!window.confirm("Are you sure you want to delete this credential?")) return;
+    
     try {
       const response = await getData(`/credentials/${credId}?user_id=${userId}`, {
         method: "DELETE",
@@ -343,14 +387,52 @@ const Dashboard = () => {
         throw new Error(response.data.message || "Failed to delete credential");
       }
       setMessage("Credential deleted successfully!");
-      // Refresh credentials
+
+      // Refresh credentials list
       const updatedCredentialsResponse = await getData(`/credentials/${selectedVaultId}`);
-      const updatedCredentialsData = await updatedCredentialsResponse.json();
       if (updatedCredentialsResponse.ok) {
-        setCredentials(updatedCredentialsData);
+        setCredentials(updatedCredentialsResponse.data);
       }
     } catch (err) {
       setMessage(`Error deleting credential: ${err.message}`);
+    } finally {
+      revalidateData();
+    }
+  };
+
+  const handleDropCredential = async (credentialId, targetVaultId) => {
+    try {
+      const response = await getData(`/credentials/${credentialId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          user_id: userId,
+          vault_id: targetVaultId,
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error(response.data.message || "Failed to move credential");
+      }
+      
+      setMessage("Credential moved successfully!");
+      
+      if (response.data) {
+        if (selectedVaultId === credentials.find(c => c.id === credentialId)?.vault_id) {
+          const updatedCredentialsResponse = await getData(`/credentials/${selectedVaultId}`);
+          if (updatedCredentialsResponse.ok) {
+            setCredentials(updatedCredentialsResponse.data);
+          }
+        }
+        if (selectedVaultId === targetVaultId) {
+          const updatedCredentialsResponse = await getData(`/credentials/${targetVaultId}`);
+          if (updatedCredentialsResponse.ok) {
+            setCredentials(updatedCredentialsResponse.data);
+          }
+        }
+      }
+    } catch (err) {
+      setMessage(`Error moving credential: ${err.message}`);
     } finally {
       revalidateData();
     }
@@ -414,6 +496,50 @@ const Dashboard = () => {
     getDataCredentials();
   }, [selectedVaultId]);
 
+  // Add handler for opening edit vault modal
+  const handleOpenEditVault = (vault) => {
+    setEditVaultId(vault.id);
+    setEditVaultName(vault.name);
+    setShowEditVaultModal(true);
+  };
+
+  // Add handler for editing vault
+  const handleEditVault = async (e) => {
+    e.preventDefault();
+    if (!editVaultId || !editVaultName.trim()) {
+      setMessage("Missing vault information.");
+      return;
+    }
+
+    try {
+      const response = await getData(`/vaults/${editVaultId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          user_id: userId,
+          name: editVaultName,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(response.data.message || "Failed to update vault");
+      }
+
+      setMessage("Vault updated successfully!");
+      setShowEditVaultModal(false);
+
+      // Refresh vaults list
+      const updatedVaultsResponse = await getData(`/vaults?user_id=${userId}`);
+      if (updatedVaultsResponse.ok) {
+        setVaults(updatedVaultsResponse.data);
+      }
+    } catch (err) {
+      setMessage(`Error updating vault: ${err.message}`);
+    } finally {
+      revalidateData();
+    }
+  };
+
   if (!userId && !message) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-100">
@@ -468,6 +594,8 @@ const Dashboard = () => {
           message={message}
           error={error}
           loadingVaults={loadingVaults}
+          onDropCredential={handleDropCredential}
+          handleOpenEditVault={handleOpenEditVault}
         />
         {/* Credentials Section */}
         <Credentials
@@ -543,6 +671,14 @@ const Dashboard = () => {
         editCredentialVaultId={editCredentialVaultId}
         setEditCredentialVaultId={setEditCredentialVaultId}
         vaults={vaults}
+      />
+      {/* Edit Vault Modal */}
+      <EditVaultModal
+        show={showEditVaultModal}
+        onClose={() => setShowEditVaultModal(false)}
+        onSubmit={handleEditVault}
+        editVaultName={editVaultName}
+        setEditVaultName={setEditVaultName}
       />
     </div>
   );
