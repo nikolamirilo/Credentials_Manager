@@ -105,7 +105,7 @@ const Dashboard = () => {
       const response = await getData(`/vaults`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ user_id: userId, name: newVaultName }),
+        body: JSON.stringify({ user_id: userId, name: newVaultName })
       });
       const data = response.data;
 

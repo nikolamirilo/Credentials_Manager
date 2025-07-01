@@ -6,6 +6,7 @@ export async function getData(url_params, options = {}) {
             method: options.method || 'GET',
             headers: options.headers || {},
             body: options.body || undefined,
+            cache: 'no-store',
             ...options
         })
         
